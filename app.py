@@ -43,7 +43,7 @@ def _speichere_kommentare(kommentare: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Pipeline laden (Module dynamisch, damit kein __init__.py nötig)
+# Pipeline laden – Module einmalig beim App-Start laden (kein cache_resource)
 # ---------------------------------------------------------------------------
 
 def _lm(name: str, pfad: Path):
@@ -53,25 +53,19 @@ def _lm(name: str, pfad: Path):
     return mod
 
 
-@st.cache_resource
-def _lade_module():
-    src = ROOT / "src"
-    return (
-        _lm("load_data", src / "01_load_data.py"),
-        _lm("fx",        src / "02_fx_conversion.py"),
-        _lm("ic",        src / "03_ic_elimination.py"),
-        _lm("mi",        src / "04_minority_interest.py"),
-        _lm("co",        src / "05_consolidate.py"),
-        _lm("ex",        src / "06_export_excel.py"),
-    )
+_src = ROOT / "src"
+_m1 = _lm("load_data", _src / "01_load_data.py")
+_m2 = _lm("fx",        _src / "02_fx_conversion.py")
+_m3 = _lm("ic",        _src / "03_ic_elimination.py")
+_m4 = _lm("mi",        _src / "04_minority_interest.py")
+_m5 = _lm("co",        _src / "05_consolidate.py")
+_m6 = _lm("ex",        _src / "06_export_excel.py")
 
 
 @st.cache_data(show_spinner="Pipeline wird berechnet …")
 def _run_pipeline(chf_stichtag: float, chf_durch: float,
                   pln_stichtag: float, pln_durch: float):
     """Führt die komplette Pipeline durch. Cache-Key = FX-Kurse."""
-    m1, m2, m3, m4, m5, _ = _lade_module()
-
     kurse = {
         "stichtag": "2024-12-31",
         "CHF_EUR": {"stichtag": chf_stichtag, "durchschnitt": chf_durch},
@@ -81,11 +75,11 @@ def _run_pipeline(chf_stichtag: float, chf_durch: float,
     import logging
     logging.disable(logging.CRITICAL)
 
-    daten          = m1.load_all()
-    daten          = m2.konvertiere_alle(daten, kurse)
-    daten, ic_log  = m3.eliminiere_ic(daten)
-    daten, min_log = m4.berechne_alle_minderheiten(daten)
-    guv, bilanz    = m5.konsolidiere(daten)
+    daten          = _m1.load_all()
+    daten          = _m2.konvertiere_alle(daten, kurse)
+    daten, ic_log  = _m3.eliminiere_ic(daten)
+    daten, min_log = _m4.berechne_alle_minderheiten(daten)
+    guv, bilanz    = _m5.konsolidiere(daten)
 
     logging.disable(logging.NOTSET)
     return guv, bilanz, daten, ic_log, min_log
@@ -195,14 +189,12 @@ with st.sidebar:
     st.markdown("**⬇️ Excel-Export**")
     if st.button("Konzernabschluss generieren"):
         import io
-        _, _, m3_mod, m4_mod, m5_mod, m6_mod = _lade_module()
-        m1_mod, m2_mod = _lade_module()[:2]
         buf = io.BytesIO()
         # temporäre Datei im Speicher
         import tempfile, os
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
             tmp_path = pathlib.Path(tmp.name)
-        m6_mod.exportiere_excel(guv, bilanz, daten, ic_log, pfad=tmp_path)
+        _m6.exportiere_excel(guv, bilanz, daten, ic_log, pfad=tmp_path)
         buf.write(tmp_path.read_bytes())
         os.unlink(tmp_path)
         buf.seek(0)
