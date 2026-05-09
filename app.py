@@ -159,7 +159,13 @@ with st.sidebar:
     st.header("⚙️ Wechselkurse")
     st.caption("Änderungen → Pipeline wird automatisch neu berechnet")
 
-    fx_raw = json.loads((ROOT / "config" / "fx_rates.json").read_text())
+    _fx_path = ROOT / "config" / "fx_rates.json"
+    _fx_defaults = {
+        "stichtag": "2024-12-31",
+        "CHF_EUR": {"stichtag": 1.058, "durchschnitt": 1.042},
+        "PLN_EUR": {"stichtag": 0.233, "durchschnitt": 0.228},
+    }
+    fx_raw = json.loads(_fx_path.read_text()) if _fx_path.exists() else _fx_defaults
 
     st.subheader("CHF → EUR")
     chf_s = st.number_input("Stichtagskurs (Bilanz)",  value=fx_raw["CHF_EUR"]["stichtag"],
