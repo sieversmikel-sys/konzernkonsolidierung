@@ -59,7 +59,7 @@ def _lm(name: str, pfad: Path):
     return mod
 
 
-_src = ROOT / "src"
+_src = ROOT / "src" if (ROOT / "src" / "01_load_data.py").exists() else ROOT
 _m1 = _lm("load_data", _src / "01_load_data.py")
 _m2 = _lm("fx",        _src / "02_fx_conversion.py")
 _m3 = _lm("ic",        _src / "03_ic_elimination.py")
