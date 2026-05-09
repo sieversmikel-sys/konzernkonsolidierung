@@ -46,10 +46,16 @@ def _speichere_kommentare(kommentare: dict) -> None:
 # Pipeline laden – Module einmalig beim App-Start laden (kein cache_resource)
 # ---------------------------------------------------------------------------
 
+import types, sys
+
 def _lm(name: str, pfad: Path):
-    spec = importlib.util.spec_from_file_location(name, pfad)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    """Lädt ein Python-Modul per exec() – kompatibel mit read-only Filesystemen."""
+    mod = types.ModuleType(name)
+    mod.__file__ = str(pfad)
+    mod.__name__ = name
+    code = compile(pfad.read_text(encoding="utf-8"), str(pfad), "exec")
+    exec(code, mod.__dict__)
+    sys.modules[name] = mod
     return mod
 
 
