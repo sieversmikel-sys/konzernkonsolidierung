@@ -1,0 +1,11 @@
+{
+  "stichtag": "2024-12-31",
+  "CHF_EUR": {
+    "stichtag": 1.2,
+    "durchschnitt": 1.042
+  },
+  "PLN_EUR": {
+    "stichtag": 0.233,
+    "durchschnitt": 0.228
+  }
+}
